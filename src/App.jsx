@@ -1,80 +1,67 @@
 
 import { useState } from "react";
-import { runInvestigation } from "./api/investigation";
+import { useDispatch, useSelector } from "react-redux";
+
+import {
+  runInvestigationThunk,
+  clearInvestigation,
+} from "./features/investigation/investigationSlice";
+
 import ProblemForm from "./components/ProblemForm";
-
-function ResultSection({ title, data }) {
-  if (
-    data == null ||
-    data === "" ||
-    (Array.isArray(data) && data.length === 0)
-  ) {
-    return null;
-  }
-
-  return (
-    <section className="result-section">
-      <h3>{title}</h3>
-      <pre>
-        {typeof data === "string"
-          ? data
-          : JSON.stringify(data, null, 2)}
-      </pre>
-    </section>
-  );
-}
+import ReportSection from "./components/ReportSection";
+import AgentFindings from "./components/AgentFindings";
+import SourcesPanel from "./components/SourcesPanel";
 
 export default function App() {
-  const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState(null);
-  const [error, setError] = useState("");
+  const dispatch = useDispatch();
+
+  // Get investigation data from Redux
+  const { report, status, error } = useSelector(
+    (state) => state.investigation
+  );
+
+  // Local state for copy button feedback
   const [copied, setCopied] = useState(false);
 
-  async function handleInvestigation(query, topK) {
-    setLoading(true);
-    setError("");
-    setReport(null);
+  const loading = status === "loading";
+
+  // Start a new investigation
+  function handleInvestigation(query, topK) {
     setCopied(false);
 
-    try {
-      const result = await runInvestigation(query, topK);
-      setReport(result);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong during the investigation."
-      );
-    } finally {
-      setLoading(false);
-    }
+    dispatch(
+      runInvestigationThunk({
+        query,
+        topK,
+      })
+    );
   }
 
+  // Copy complete investigation report
   async function handleCopyReport() {
     try {
       await navigator.clipboard.writeText(
         JSON.stringify(report, null, 2)
       );
+
       setCopied(true);
     } catch {
-      setError("Unable to copy the report. Please try again.");
+      alert("Unable to copy the report. Please try again.");
     }
   }
 
+  // Clear current investigation
   function handleNewInvestigation() {
-    setReport(null);
-    setError("");
+    dispatch(clearInvestigation());
     setCopied(false);
   }
 
   return (
     <div className="workspace">
+
+      {/* LEFT SIDEBAR */}
       <aside className="sidebar">
-        <a
-          className="brand"
-          href="/"
-          aria-label="Praxia home"
-        >
+        <a className="brand" href="/" aria-label="Praxia home">
           <span className="brand-mark">P</span>
 
           <span className="brand-copy">
@@ -123,6 +110,7 @@ export default function App() {
         </div>
       </aside>
 
+      {/* MAIN WORKSPACE */}
       <main className="main-area">
         <header className="topbar">
           <div className="breadcrumb">
@@ -138,6 +126,8 @@ export default function App() {
         </header>
 
         <div className="main-scroll">
+
+          {/* HERO SECTION */}
           <section className="hero">
             <div className="hero-icon">
               <span>✳</span>
@@ -159,11 +149,13 @@ export default function App() {
             </p>
           </section>
 
+          {/* INVESTIGATION FORM */}
           <ProblemForm
             onSubmit={handleInvestigation}
             loading={loading}
           />
 
+          {/* LOADING STATE */}
           {loading && (
             <section className="state-panel" role="status">
               <div className="loading-spinner" />
@@ -178,6 +170,7 @@ export default function App() {
             </section>
           )}
 
+          {/* ERROR STATE */}
           {error && (
             <section className="error-panel" role="alert">
               <div>
@@ -188,21 +181,27 @@ export default function App() {
               <button
                 className="secondary-button"
                 type="button"
-                onClick={() => setError("")}
+                onClick={handleNewInvestigation}
               >
                 Dismiss
               </button>
             </section>
           )}
 
+          {/* INVESTIGATION RESULTS */}
           {report && (
             <section
               className="report-container"
               aria-live="polite"
             >
+
+              {/* REPORT HEADER */}
               <div className="report-heading">
                 <div>
-                  <p className="eyebrow">INVESTIGATION RESULTS</p>
+                  <p className="eyebrow">
+                    INVESTIGATION RESULTS
+                  </p>
+
                   <h2>Your investigation report</h2>
                 </div>
 
@@ -225,34 +224,31 @@ export default function App() {
                 </div>
               </div>
 
-              <ResultSection
-                title="Final report"
+              {/* FINAL SYNTHESIZED REPORT */}
+              <ReportSection
+                title="Final investigation report"
                 data={report.final_report}
               />
 
-              <ResultSection
-                title="Evidence findings"
-                data={report.evidence_findings}
+              {/* AI AGENT FINDINGS */}
+              <AgentFindings
+                evidence={report.evidence_findings}
+                rootCause={report.root_cause_findings}
+                solutions={report.solution_findings}
               />
 
-              <ResultSection
-                title="Possible root causes"
-                data={report.root_cause_findings}
+              {/* RETRIEVED KNOWLEDGE SOURCES */}
+              <SourcesPanel
+                sources={report.sources}
               />
 
-              <ResultSection
-                title="Suggested solutions"
-                data={report.solution_findings}
-              />
-
-              <ResultSection
-                title="Retrieved sources"
-                data={report.sources}
-              />
-
+              {/* ORIGINAL JSON FOR DEBUGGING */}
               <details className="raw-response">
                 <summary>View complete API response</summary>
-                <pre>{JSON.stringify(report, null, 2)}</pre>
+
+                <pre>
+                  {JSON.stringify(report, null, 2)}
+                </pre>
               </details>
 
               <p className="report-disclaimer">
@@ -262,16 +258,20 @@ export default function App() {
             </section>
           )}
 
+          {/* FOOTER */}
           <footer className="app-footer">
             <span>Built for clearer thinking.</span>
             <span>Praxia © 2026</span>
           </footer>
+
         </div>
       </main>
 
+      {/* RIGHT CONTEXT PANEL */}
       <aside className="context-panel">
         <div className="context-heading">
           <span>YOUR WORKSPACE</span>
+
           <span className="context-menu" aria-hidden="true">
             ···
           </span>
@@ -284,6 +284,7 @@ export default function App() {
               <span />
               <span />
             </div>
+
             <div className="context-symbol">✳</div>
           </div>
 
@@ -300,6 +301,7 @@ export default function App() {
 
           <div className="workflow-step">
             <span className="step-number">01</span>
+
             <div>
               <strong>Gather evidence</strong>
               <p>Retrieve relevant information and sources.</p>
@@ -308,6 +310,7 @@ export default function App() {
 
           <div className="workflow-step">
             <span className="step-number">02</span>
+
             <div>
               <strong>Explore causes</strong>
               <p>Investigate possible explanations.</p>
@@ -316,6 +319,7 @@ export default function App() {
 
           <div className="workflow-step">
             <span className="step-number">03</span>
+
             <div>
               <strong>Find next steps</strong>
               <p>Review suggested solutions and limitations.</p>
@@ -340,6 +344,7 @@ export default function App() {
           <span>Findings should be verified</span>
         </div>
       </aside>
+
     </div>
   );
 }
