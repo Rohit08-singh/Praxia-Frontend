@@ -1,731 +1,742 @@
 
 /* ==========================================
-   PRAXIA — ADVANCED VISUAL POLISH
+   PRAXIA — PREMIUM UI REFINEMENT
+   Editorial layout / warm neutrals / violet
 ========================================== */
 
-/* 1. Consistent rendering and smoother interactions */
-
-* {
-  -webkit-tap-highlight-color: transparent;
+:root {
+  --prx-ink: #252338;
+  --prx-muted: #858397;
+  --prx-cream: #f5f3eb;
+  --prx-canvas: #fbfaf7;
+  --prx-white: #fffefa;
+  --prx-border: #e8e4da;
+  --prx-violet: #795ce0;
+  --prx-violet-dark: #4b378f;
+  --prx-violet-wash: #f0ebff;
+  --prx-green: #75865b;
 }
 
-::selection {
-  color: #30244f;
-  background: #e3d8ff;
+/* A little more depth without a noisy background */
+
+.workspace {
+  background: var(--prx-cream);
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-button,
-a,
-select,
-textarea {
-  -webkit-font-smoothing: antialiased;
-}
-
-button:focus-visible,
-a:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 3px solid rgb(128 100 232 / 35%);
-  outline-offset: 3px;
-}
-
-/* 2. More refined app surfaces */
-
-.sidebar,
-.context-panel {
+.main-area {
   position: relative;
+  background:
+    radial-gradient(
+      ellipse at 52% 10%,
+      rgb(228 219 255 / 34%),
+      transparent 38%
+    ),
+    var(--prx-canvas);
 }
 
-.sidebar::after,
-.context-panel::before {
+.main-area::before {
   content: "";
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
+  inset: 58px 0 0;
+  z-index: 0;
   pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgb(140 126 183 / 13%) 20%,
-    rgb(140 126 183 / 8%) 80%,
-    transparent
-  );
+  opacity: 0.18;
+  background-image: radial-gradient(#c9c0df 0.65px, transparent 0.65px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, #000, transparent 55%);
 }
 
-.sidebar::after {
-  right: 0;
+.topbar,
+.main-scroll {
+  position: relative;
+  z-index: 1;
 }
 
-.context-panel::before {
-  left: 0;
-}
-
-/* 3. Refined top navigation */
-
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-}
-
-.breadcrumb strong {
-  font-weight: 600;
-}
-
-.breadcrumb span:first-child {
-  transition: color 160ms ease;
-}
-
-.breadcrumb span:first-child:hover {
-  color: var(--prx-violet-dark);
-}
-
-.topbar-status {
-  white-space: nowrap;
-  transition:
-    background 180ms ease,
-    border-color 180ms ease;
-}
-
-.topbar-status:hover {
-  background: #eae6dc;
-  border-color: #ddd7c8;
-}
-
-.topbar-status .mini-status {
-  box-shadow: 0 0 0 3px rgb(117 134 91 / 12%);
-}
-
-/* 4. Brand interactions */
+/* Cleaner brand */
 
 .brand {
-  position: relative;
+  gap: 13px;
+}
+
+.brand-mark {
+  width: 41px;
+  height: 41px;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #473675, #27203f);
+  box-shadow:
+    0 4px 12px rgb(58 43 103 / 15%),
+    0 0 0 4px rgb(121 92 224 / 7%);
 }
 
 .brand-name {
-  transition: color 180ms ease;
-}
-
-.brand:hover .brand-name {
-  color: #7355c7;
+  font-size: 22px;
+  letter-spacing: -1.15px;
 }
 
 .brand-caption {
-  transition: color 180ms ease;
+  font-size: 9px;
+  letter-spacing: 0.05px;
 }
 
-.brand:hover .brand-caption {
-  color: #70668e;
-}
-
-/* 5. Navigation refinements */
-
-.nav-item {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-}
-
-.nav-item::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(
-    100deg,
-    rgb(255 255 255 / 25%),
-    transparent 75%
-  );
-  opacity: 0;
-  transition: opacity 180ms ease;
-}
-
-.nav-item:hover::after {
-  opacity: 1;
-}
-
-.nav-item.active {
-  font-weight: 600;
-}
-
-.nav-icon {
-  transition: transform 200ms ease;
-}
-
-.nav-item:hover .nav-icon {
-  transform: scale(1.08);
-}
-
-.sidebar-note {
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    background 180ms ease;
-}
-
-.sidebar-note:hover {
-  transform: translateY(-1px);
-  background: #fffefa;
-}
-
-/* 6. Hero typography */
-
-.hero .eyebrow {
-  margin-bottom: 4px;
-}
-
-.hero h1 {
-  text-wrap: balance;
-}
-
-.hero-description {
-  text-wrap: pretty;
-}
-
-.hero-icon {
-  transition:
-    transform 220ms ease,
-    box-shadow 220ms ease;
-}
-
-.hero-icon:hover {
-  transform: translateY(-2px) rotate(-3deg);
-  box-shadow:
-    0 8px 20px rgb(92 67 157 / 12%),
-    inset 0 1px 0 white;
-}
-
-/* 7. Form card interactions */
-
-.problem-form {
-  isolation: isolate;
-  contain: paint;
-}
-
-.problem-form::before {
-  transform-origin: left center;
-  transition: height 180ms ease;
-}
-
-.problem-form:focus-within::before {
-  height: 4px;
-}
-
-.section-heading h2 {
-  text-wrap: balance;
-}
-
-.section-heading > p:not(.eyebrow) {
-  text-wrap: pretty;
-}
-
-/* 8. Better textarea behavior */
-
-.problem-form textarea {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  caret-color: var(--prx-violet);
-  transition:
-    background 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
-}
-
-.problem-form textarea:disabled {
-  cursor: wait;
-  background: #f6f4f1;
-}
-
-.problem-form textarea::placeholder {
-  opacity: 0.9;
-}
-
-.problem-form textarea:focus::placeholder {
-  opacity: 0.65;
-}
-
-/* 9. Evidence source selector */
-
-.source-selector {
-  color: #777387;
-  font-size: 10px;
-}
-
-.form-footer select {
-  min-height: 35px;
-  cursor: pointer;
-  transition:
-    background 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease;
-}
-
-.form-footer select:hover:not(:disabled) {
-  background: #f8f5ff;
-  border-color: #d7cbf1;
-}
-
-.form-footer select:focus-visible {
-  outline: 2px solid rgb(128 100 232 / 25%);
-  outline-offset: 2px;
-}
-
-/* 10. Primary button detail */
-
-.investigate-button {
-  isolation: isolate;
-  overflow: hidden;
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    background 180ms ease;
-}
-
-.investigate-button:active:not(:disabled) {
-  transform: translateY(0) scale(0.995);
-  box-shadow: 0 2px 6px rgb(76 55 145 / 15%);
-}
-
-.investigate-button:focus-visible {
-  outline-offset: 4px;
-}
-
-.button-sparkle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 250ms ease;
-}
-
-.investigate-button:hover:not(:disabled) .button-sparkle {
-  transform: rotate(25deg) scale(1.1);
-}
-
-.investigate-button:disabled {
-  cursor: wait;
-  opacity: 0.75;
-}
-
-/* 11. Example prompts */
-
-.example-prompt {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  min-width: 0;
-  transition:
-    background 180ms ease,
-    border-color 180ms ease,
-    transform 180ms ease,
-    box-shadow 180ms ease;
-}
-
-.example-prompt:active:not(:disabled) {
-  transform: scale(0.99);
-}
-
-.example-prompt:focus-visible {
-  outline-offset: 2px;
-}
-
-.example-icon {
-  transition:
-    transform 180ms ease,
-    background 180ms ease;
-}
-
-.example-prompt:hover:not(:disabled) .example-icon {
-  transform: translateY(-1px);
-  background: #e6ddff;
-}
-
-.example-text {
-  overflow-wrap: anywhere;
-  text-wrap: pretty;
-}
-
-/* 12. Context panel */
-
-.context-card,
-.context-tip {
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease;
-}
-
-.context-card h3 {
-  text-wrap: balance;
-}
-
-.context-card p,
-.context-tip p {
-  text-wrap: pretty;
-}
-
-.workflow-step {
-  position: relative;
-}
-
-.step-number {
-  transition:
-    background 180ms ease,
-    border-color 180ms ease,
-    transform 180ms ease;
-}
-
-.workflow-step:hover .step-number {
-  transform: translateY(-1px);
-  background: #e5dcff;
-  border-color: #d3c4fa;
-}
-
-.workflow-step strong {
-  transition: color 180ms ease;
-}
-
-.workflow-step:hover strong {
-  color: var(--prx-violet-dark);
-}
-
-/* 13. Report presentation */
-
-.report-container {
-  animation: report-enter 280ms ease both;
-  overflow-wrap: anywhere;
-}
-
-@keyframes report-enter {
-  from {
-    opacity: 0;
-    transform: translateY(7px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.report-heading {
-  align-items: center;
-}
-
-.report-heading .eyebrow {
-  margin-bottom: 3px;
-}
-
-.result-section h3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.result-section h3::before {
-  content: "";
-  width: 4px;
-  height: 16px;
-  flex: 0 0 4px;
-  background: linear-gradient(
-    to bottom,
-    #a48bef,
-    #7155d1
-  );
-  border-radius: 5px;
-}
-
-.result-section pre {
-  overflow-wrap: anywhere;
-  word-break: normal;
-  tab-size: 2;
-}
-
-.result-section + .result-section {
-  border-top: 1px solid #f0edf3;
-}
-
-.report-disclaimer {
-  padding: 12px 14px;
-  background: #f8f5eb;
-  border: 1px solid #ebe5d5;
-  border-radius: 9px;
-}
-
-/* 14. Raw API response */
-
-.raw-response {
-  transition:
-    border-color 180ms ease,
-    background 180ms ease;
-}
-
-.raw-response:hover {
-  border-color: #dcd3ed;
-}
-
-.raw-response summary {
-  padding: 2px 0;
-  font-weight: 600;
-}
-
-.raw-response summary::marker {
-  color: var(--prx-violet);
-}
-
-.raw-response[open] summary {
-  margin-bottom: 10px;
-  color: var(--prx-violet-dark);
-}
-
-.raw-response pre {
-  max-height: 360px;
-  padding: 14px;
-  background: #f2f0ea;
-  border: 1px solid #e8e4da;
-  border-radius: 8px;
-}
-
-/* 15. Secondary actions */
-
-.secondary-button {
-  min-height: 34px;
-  white-space: nowrap;
-  transition:
-    background 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
-}
-
-.secondary-button:active {
-  transform: scale(0.98);
-}
-
-/* 16. Loading and error states */
-
-.state-panel {
-  animation: report-enter 220ms ease both;
-}
-
-.state-panel .loading-spinner {
-  flex-shrink: 0;
-}
+/* Keep the logo animation elegant */
 
-.error-panel {
-  gap: 14px;
-  animation: report-enter 220ms ease both;
+.brand-mark::before {
+  border-color: rgb(130 101 222 / 36%);
 }
 
-.error-panel .secondary-button {
-  flex-shrink: 0;
+.brand-mark::after {
+  color: #b19bff;
+  font-size: 11px;
 }
 
-@keyframes status-pulse {
+@keyframes praxia-glow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgb(128 100 232 / 20%);
+    box-shadow:
+      0 4px 12px rgb(58 43 103 / 15%),
+      0 0 0 4px rgb(121 92 224 / 7%);
   }
 
   50% {
-    box-shadow: 0 0 0 5px rgb(128 100 232 / 0%);
+    box-shadow:
+      0 5px 18px rgb(58 43 103 / 20%),
+      0 0 0 5px rgb(121 92 224 / 11%);
   }
 }
 
-.loading-spinner {
-  animation:
-    spin 0.8s linear infinite,
-    status-pulse 1.8s ease-in-out infinite;
+/* Navigation feels like a real product */
+
+.sidebar {
+  background: linear-gradient(180deg, #f5f3ec, #f0eee5);
 }
 
-/* 17. Scrollbars */
-
-.main-scroll,
-.raw-response pre {
-  scrollbar-width: thin;
-  scrollbar-color: #d8d0e8 transparent;
+.workspace-label,
+.context-heading,
+.context-section h4 {
+  letter-spacing: 1.45px;
 }
 
-.main-scroll::-webkit-scrollbar,
-.raw-response pre::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+.nav-item {
+  min-height: 43px;
+  font-size: 12px;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
 }
 
-.main-scroll::-webkit-scrollbar-track,
-.raw-response pre::-webkit-scrollbar-track {
-  background: transparent;
+.nav-item.active {
+  background: linear-gradient(110deg, #eae4fc, #f4f0ff);
+  border-color: #dfd5fa;
+  box-shadow: inset 3px 0 0 #8568e5;
 }
 
-.main-scroll::-webkit-scrollbar-thumb,
-.raw-response pre::-webkit-scrollbar-thumb {
-  background: #d8d0e8;
-  border: 2px solid transparent;
+.nav-item.active .nav-icon {
+  color: #795ce0;
+}
+
+.sidebar-note {
+  border-radius: 11px;
+  padding: 14px 11px;
+}
+
+/* Header */
+
+.topbar {
+  min-height: 57px;
+  background: rgb(255 254 250 / 72%);
+  backdrop-filter: blur(12px);
+  border-bottom-color: #eae6dd;
+}
+
+.breadcrumb {
+  font-size: 11px;
+}
+
+.topbar-status {
+  padding: 7px 10px;
+  background: #f0eee5;
+  border: 1px solid #e7e3d8;
   border-radius: 20px;
-  background-clip: padding-box;
+  color: #696957;
 }
 
-.main-scroll::-webkit-scrollbar-thumb:hover,
-.raw-response pre::-webkit-scrollbar-thumb:hover {
-  background: #b7a7df;
-  background-clip: padding-box;
+/* Hero: more editorial and less crowded */
+
+.hero {
+  max-width: 600px;
+  margin-top: 30px;
+  margin-bottom: 26px;
 }
 
-/* 18. Footer refinement */
+.hero-icon {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 17px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #fff, #e9e1ff);
+  border-color: #e0d6fa;
+  box-shadow:
+    0 5px 14px rgb(92 67 157 / 7%),
+    inset 0 1px 0 white;
+}
+
+.hero-icon::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1px solid rgb(129 101 222 / 20%);
+  border-radius: 17px;
+  pointer-events: none;
+}
+
+.hero h1 {
+  margin: 13px 0 12px;
+  color: var(--prx-ink);
+  font-size: clamp(35px, 3.4vw, 45px);
+  line-height: 1.1;
+  letter-spacing: -2.3px;
+  font-weight: 600;
+}
+
+.hero h1 span {
+  background: linear-gradient(100deg, #654dc0, #8d70eb 70%, #a28af0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-description {
+  max-width: 420px;
+  color: #777588;
+  font-size: 12px;
+  line-height: 1.9;
+}
+
+/* The main form should feel like the primary workspace */
+
+.problem-form {
+  padding: 24px;
+  background: linear-gradient(145deg, #fffefa 0%, #fdfbff 100%);
+  border: 1px solid #e5e0ed;
+  border-radius: 17px;
+  box-shadow:
+    0 2px 5px rgb(46 37 78 / 2%),
+    0 12px 35px rgb(46 37 78 / 4%);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
+}
+
+.problem-form::before {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    #cbbaff,
+    #8061e4 42%,
+    #bda6f5 78%,
+    #e5dcff
+  );
+}
+
+.problem-form:focus-within {
+  border-color: #d7cafa;
+  box-shadow:
+    0 4px 10px rgb(46 37 78 / 3%),
+    0 14px 38px rgb(88 63 158 / 6%);
+}
+
+.section-heading h2 {
+  font-size: 19px;
+  letter-spacing: -0.75px;
+  line-height: 1.4;
+}
+
+.section-heading > p:not(.eyebrow) {
+  max-width: 600px;
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+/* Better input focus and readability */
+
+.problem-form textarea {
+  min-height: 105px;
+  padding: 15px;
+  color: #343248;
+  background: #fcfbff;
+  border: 1px solid #e4dfed;
+  border-radius: 11px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.problem-form textarea::placeholder {
+  color: #9995aa;
+}
+
+.problem-form textarea:focus {
+  background: #fff;
+  border-color: #a28be8;
+  box-shadow: 0 0 0 4px rgb(126 96 210 / 8%);
+}
+
+/* Form controls */
+
+.form-footer {
+  margin: 12px 0 15px;
+  color: #878498;
+}
+
+.form-footer select {
+  padding: 9px 11px;
+  background: #fffefa;
+  border-color: #e2ddec;
+  border-radius: 8px;
+  color: #49445e;
+}
+
+.form-footer select:focus {
+  border-color: #a28be8;
+}
+
+/* A strong, purposeful call to action */
+
+.investigate-button {
+  min-height: 47px;
+  border-radius: 10px;
+  background: linear-gradient(105deg, #332957, #5a43a5 58%, #795ce0);
+  border: 1px solid #6c53c4;
+  box-shadow:
+    0 4px 10px rgb(76 55 145 / 14%),
+    inset 0 1px 0 rgb(255 255 255 / 12%);
+  font-size: 12px;
+  letter-spacing: 0.1px;
+}
+
+.investigate-button:not(:disabled):hover {
+  background: linear-gradient(105deg, #3d3069, #654db6 58%, #8769e9);
+  box-shadow: 0 7px 19px rgb(76 55 145 / 23%);
+}
+
+.investigate-button:disabled {
+  background: #b9b2ca;
+  border-color: #b9b2ca;
+}
+
+/* Example cards: clear hierarchy and consistent heights */
+
+.example-prompts {
+  margin-top: 18px;
+}
+
+.example-prompts > p {
+  margin-bottom: 10px;
+}
+
+.example-list {
+  align-items: stretch;
+  gap: 9px;
+}
+
+.example-prompt {
+  min-height: 65px;
+  align-items: flex-start;
+  padding: 11px;
+  background: #fbf9ff;
+  border-color: #e8e1f5;
+  border-radius: 10px;
+  line-height: 1.65;
+}
+
+.example-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.example-prompt:hover:not(:disabled) {
+  background: #f3efff;
+  border-color: #d8cbf8;
+  box-shadow: 0 5px 14px rgb(89 64 157 / 6%);
+  transform: translateY(-2px);
+}
+
+/* Right panel: distinct from the central workspace */
+
+.context-panel {
+  padding-right: 18px;
+  padding-left: 18px;
+  background: linear-gradient(180deg, #f3f0e7, #efede4);
+}
+
+.context-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #fffefa, #faf7ff);
+  border-color: #e5deee;
+  box-shadow: 0 3px 12px rgb(52 42 79 / 3%);
+}
+
+.context-card-art {
+  height: 86px;
+  margin-bottom: 15px;
+  background:
+    radial-gradient(circle at 75% 30%, #e9ddff, transparent 45%),
+    linear-gradient(135deg, #f8f5ff, #eeebf6);
+  border: 1px solid #eee7f7;
+}
+
+.context-art-sheet {
+  right: 24px;
+  width: 49px;
+  height: 62px;
+  background: #fffefa;
+  box-shadow: 0 6px 18px rgb(78 54 138 / 10%);
+}
+
+.context-card h3 {
+  font-size: 15px;
+  letter-spacing: -0.5px;
+}
+
+.context-card p {
+  line-height: 1.85;
+}
+
+.context-section {
+  margin-top: 28px;
+}
+
+.workflow-step {
+  gap: 11px;
+  margin-bottom: 22px;
+}
+
+.step-number {
+  width: 31px;
+  height: 31px;
+  border-radius: 9px;
+}
+
+.workflow-step strong {
+  font-size: 10px;
+}
+
+.workflow-step p {
+  font-size: 9px;
+  line-height: 1.85;
+}
+
+.context-tip {
+  padding: 15px;
+  border-radius: 11px;
+  background: linear-gradient(140deg, #e9e7d9, #f4f0e4);
+}
+
+.context-tip p {
+  line-height: 1.85;
+}
+
+/* Loading state */
+
+.state-panel {
+  padding: 20px;
+  background: #fffefa;
+  border: 1px solid #e4deee;
+  border-radius: 12px;
+}
+
+.loading-spinner {
+  border-color: #e8e0fc;
+  border-top-color: var(--prx-violet);
+}
+
+.state-panel h3 {
+  color: var(--prx-ink);
+}
+
+/* Report styling */
+
+.report-container {
+  padding: 23px;
+  background: #fffefa;
+  border: 1px solid #e5e0ed;
+  border-radius: 15px;
+  box-shadow: 0 6px 24px rgb(46 37 78 / 4%);
+}
+
+.report-heading {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #eeeaf2;
+}
+
+.report-heading h2 {
+  font-size: 21px;
+  letter-spacing: -0.8px;
+}
+
+.result-section {
+  padding: 19px 0;
+  border-bottom: 1px solid #f0edf3;
+}
+
+.result-section h3 {
+  font-size: 13px;
+  letter-spacing: -0.2px;
+}
+
+.result-section pre,
+.raw-response pre {
+  color: #625f70;
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+.raw-response {
+  background: #f8f6f1;
+  border-color: #e9e5dc;
+  border-radius: 9px;
+}
+
+.secondary-button {
+  border-radius: 8px;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.secondary-button:hover {
+  background: #f2edff;
+  border-color: #d7caf7;
+}
+
+/* Footer */
 
 .app-footer {
-  align-items: center;
-  gap: 12px;
-  line-height: 1.7;
+  color: #969184;
+  border-top-color: #e8e4da;
 }
 
-.app-footer span:first-child {
-  color: #7c778e;
-}
+/* Desktop refinements */
 
-/* 19. Tablet refinements */
+@media (min-width: 1101px) {
+  .main-scroll {
+    padding-right: 34px;
+    padding-left: 34px;
+  }
 
-@media (max-width: 1100px) {
   .hero {
-    max-width: 580px;
+    margin-top: 25px;
+    margin-bottom: 23px;
   }
 
   .problem-form {
     padding: 22px;
   }
 
-  .example-prompt {
-    align-items: center;
-  }
-
-  .report-container {
-    padding: 20px;
+  .problem-form textarea {
+    height: 88px;
+    min-height: 88px;
+    resize: none;
   }
 }
 
-/* 20. Compact laptop layout */
+/* Smaller laptop screens */
 
 @media (min-width: 1101px) and (max-height: 780px) {
   .hero {
-    margin-top: 12px;
+    margin-top: 13px;
     margin-bottom: 13px;
   }
 
   .hero-icon {
-    margin-bottom: 7px;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
   }
 
   .hero h1 {
-    margin: 6px 0;
+    font-size: 33px;
+    margin: 7px 0;
   }
 
   .problem-form {
-    padding-top: 15px;
-    padding-bottom: 15px;
+    padding: 16px 20px;
+  }
+
+  .section-heading h2 {
+    font-size: 17px;
+  }
+
+  .problem-form form {
+    margin-top: 10px;
   }
 
   .problem-form textarea {
-    height: 63px;
-    min-height: 63px;
+    height: 65px;
+    min-height: 65px;
+  }
+
+  .form-footer {
+    margin: 7px 0 9px;
+  }
+
+  .investigate-button {
+    min-height: 40px;
   }
 
   .example-prompts {
-    margin-top: 9px;
+    margin-top: 10px;
   }
 
   .example-prompt {
-    min-height: 39px;
+    min-height: 43px;
+    padding: 7px;
   }
 }
 
-/* 21. Mobile refinements */
+/* Tablet */
 
-@media (max-width: 760px) {
-  .topbar {
-    position: relative;
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: 190px minmax(0, 1fr);
   }
 
-  .hero h1 {
-    text-wrap: balance;
+  .context-panel {
+    display: none;
   }
 
-  .problem-form textarea {
-    height: 110px;
-    min-height: 110px;
+  .example-list {
+    grid-template-columns: 1fr;
   }
 
   .example-prompt {
-    padding: 10px;
+    min-height: 44px;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 760px) {
+  .workspace {
+    display: block;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
   }
 
-  .report-heading {
-    align-items: flex-start;
+  .sidebar {
+    display: none;
   }
 
-  .report-actions {
-    gap: 8px;
+  .main-area {
+    min-height: 100vh;
   }
 
-  .error-panel {
+  .main-scroll {
+    overflow: visible;
+    padding: 0 20px;
+  }
+
+  .topbar {
+    min-height: 53px;
+    padding: 0 20px;
+  }
+
+  .hero {
+    margin: 29px auto 23px;
+  }
+
+  .hero h1 {
+    font-size: 35px;
+    letter-spacing: -1.6px;
+  }
+
+  .problem-form {
+    padding: 19px;
+  }
+
+  .problem-form textarea {
+    height: 105px;
+    min-height: 105px;
+    resize: vertical;
+  }
+
+  .example-list {
+    grid-template-columns: 1fr;
+  }
+
+  .example-prompt {
+    min-height: 48px;
+  }
+
+  .app-footer {
+    margin-top: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-scroll,
+  .topbar {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .hero h1 {
+    font-size: 31px;
+  }
+
+  .hero-description {
+    font-size: 11px;
+  }
+
+  .problem-form {
+    padding: 15px;
+  }
+
+  .section-heading h2 {
+    font-size: 16px;
+  }
+
+  .section-heading > p:not(.eyebrow) {
+    font-size: 10px;
+  }
+
+  .form-footer {
     align-items: flex-start;
     flex-direction: column;
   }
 
+  .source-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .report-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .report-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
   .app-footer {
-    padding-bottom: 18px;
+    flex-direction: column;
   }
 }
 
-@media (max-width: 420px) {
-  .breadcrumb {
-    gap: 6px;
-    font-size: 10px;
-  }
-
-  .topbar-status {
-    gap: 5px;
-    padding: 6px 7px;
-    font-size: 9px;
-  }
-
-  .hero h1 {
-    font-size: 30px;
-    letter-spacing: -1.4px;
-  }
-
-  .problem-form {
-    border-radius: 13px;
-  }
-
-  .report-container {
-    padding: 15px;
-  }
-
-  .report-heading h2 {
-    font-size: 19px;
-  }
-
-  .report-actions .secondary-button {
-    flex: 1;
-  }
-}
-
-/* 22. Accessibility: reduce motion */
+/* Accessibility */
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
