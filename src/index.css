@@ -898,6 +898,7 @@ textarea:focus-visible {
   position: relative;
 }
 
+
 .sidebar::after,
 .context-panel::before {
   content: "";

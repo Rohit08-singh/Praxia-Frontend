@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
+// Investigation components
 import {
   runInvestigationThunk,
   clearInvestigation,
@@ -12,10 +13,17 @@ import ReportSection from "./components/ReportSection";
 import AgentFindings from "./components/AgentFindings";
 import SourcesPanel from "./components/SourcesPanel";
 
+// Cases components
+import CasesDashboard from "./features/cases/CasesDashboard";
+import "./features/cases/Cases.css";
+
 export default function App() {
   const dispatch = useDispatch();
 
-  // Get investigation data from Redux
+  // Current active page
+  const [activeView, setActiveView] = useState("investigation");
+
+  // Investigation data from Redux
   const { report, status, error } = useSelector(
     (state) => state.investigation
   );
@@ -56,43 +64,81 @@ export default function App() {
     setCopied(false);
   }
 
+  // Navigate to a new investigation
+  function openNewInvestigation() {
+    handleNewInvestigation();
+    setActiveView("investigation");
+  }
+
   return (
     <div className="workspace">
 
-      {/* LEFT SIDEBAR */}
+      {/* =====================================
+          LEFT SIDEBAR
+      ====================================== */}
+
       <aside className="sidebar">
+
+        {/* BRAND */}
         <a className="brand" href="/" aria-label="Praxia home">
           <span className="brand-mark">P</span>
 
           <span className="brand-copy">
             <span className="brand-name">praxia</span>
+
             <span className="brand-caption">
               AI Investigation Workspace
             </span>
           </span>
         </a>
 
-        <div className="workspace-label">WORKSPACE</div>
+        <div className="workspace-label">
+          WORKSPACE
+        </div>
 
+        {/* INVESTIGATION NAVIGATION */}
         <button
-          className="nav-item active"
+          className={`nav-item ${
+            activeView === "investigation" ? "active" : ""
+          }`}
           type="button"
-          aria-current="page"
+          onClick={() => setActiveView("investigation")}
+          aria-current={
+            activeView === "investigation" ? "page" : undefined
+          }
         >
           <span className="nav-icon">✳</span>
           <span>Investigation</span>
         </button>
 
+        {/* CASES NAVIGATION */}
+        <button
+          className={`nav-item ${
+            activeView === "cases" ? "active" : ""
+          }`}
+          type="button"
+          onClick={() => setActiveView("cases")}
+          aria-current={
+            activeView === "cases" ? "page" : undefined
+          }
+        >
+          <span className="nav-icon">▤</span>
+          <span>Cases</span>
+        </button>
+
+        {/* NEW INVESTIGATION */}
         <button
           className="nav-item"
           type="button"
-          onClick={handleNewInvestigation}
+          onClick={openNewInvestigation}
         >
           <span className="nav-icon">＋</span>
           <span>New investigation</span>
         </button>
 
+        {/* SIDEBAR BOTTOM */}
         <div className="sidebar-bottom">
+
           <div className="sidebar-note">
             <span className="mini-status" />
 
@@ -107,168 +153,224 @@ export default function App() {
           <span className="sidebar-version">
             PRAXIA · EARLY ACCESS
           </span>
+
         </div>
       </aside>
 
-      {/* MAIN WORKSPACE */}
+      {/* =====================================
+          MAIN WORKSPACE
+      ====================================== */}
+
       <main className="main-area">
+
+        {/* TOPBAR */}
         <header className="topbar">
+
           <div className="breadcrumb">
             <span>Workspace</span>
-            <span className="breadcrumb-separator">/</span>
-            <strong>Investigation</strong>
+
+            <span className="breadcrumb-separator">
+              /
+            </span>
+
+            <strong>
+              {activeView === "cases"
+                ? "Cases"
+                : "Investigation"}
+            </strong>
           </div>
 
           <div className="topbar-status">
             <span className="mini-status" />
             Multi-agent AI
           </div>
+
         </header>
 
+        {/* MAIN SCROLL AREA */}
         <div className="main-scroll">
 
-          {/* HERO SECTION */}
-          <section className="hero">
-            <div className="hero-icon">
-              <span>✳</span>
-            </div>
+          {/* =================================
+              CASES DASHBOARD
+          ================================== */}
 
-            <p className="eyebrow">
-              CLARITY STARTS WITH EVIDENCE
-            </p>
+          {activeView === "cases" ? (
 
-            <h1>
-              Make sense of
-              <br />
-              <span>complex problems.</span>
-            </h1>
+            <CasesDashboard />
 
-            <p className="hero-description">
-              Bring a problem. Explore the evidence, understand
-              possible causes, and find your next step.
-            </p>
-          </section>
+          ) : (
 
-          {/* INVESTIGATION FORM */}
-          <ProblemForm
-            onSubmit={handleInvestigation}
-            loading={loading}
-          />
+            /* =================================
+                INVESTIGATION WORKSPACE
+            ================================== */
 
-          {/* LOADING STATE */}
-          {loading && (
-            <section className="state-panel" role="status">
-              <div className="loading-spinner" />
+            <>
 
-              <div>
-                <h3>Investigating your problem</h3>
-                <p>
-                  Gathering evidence and analyzing possible
-                  explanations. This may take a little while.
-                </p>
-              </div>
-            </section>
-          )}
+              {/* HERO SECTION */}
+              <section className="hero">
 
-          {/* ERROR STATE */}
-          {error && (
-            <section className="error-panel" role="alert">
-              <div>
-                <h3>Investigation needs attention</h3>
-                <p>{error}</p>
-              </div>
-
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={handleNewInvestigation}
-              >
-                Dismiss
-              </button>
-            </section>
-          )}
-
-          {/* INVESTIGATION RESULTS */}
-          {report && (
-            <section
-              className="report-container"
-              aria-live="polite"
-            >
-
-              {/* REPORT HEADER */}
-              <div className="report-heading">
-                <div>
-                  <p className="eyebrow">
-                    INVESTIGATION RESULTS
-                  </p>
-
-                  <h2>Your investigation report</h2>
+                <div className="hero-icon">
+                  <span>✳</span>
                 </div>
 
-                <div className="report-actions">
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={handleCopyReport}
-                  >
-                    {copied ? "Copied ✓" : "Copy report"}
-                  </button>
+                <p className="eyebrow">
+                  CLARITY STARTS WITH EVIDENCE
+                </p>
+
+                <h1>
+                  Make sense of
+                  <br />
+                  <span>complex problems.</span>
+                </h1>
+
+                <p className="hero-description">
+                  Bring a problem. Explore the evidence, understand
+                  possible causes, and find your next step.
+                </p>
+
+              </section>
+
+              {/* INVESTIGATION FORM */}
+              <ProblemForm
+                onSubmit={handleInvestigation}
+                loading={loading}
+              />
+
+              {/* LOADING STATE */}
+              {loading && (
+                <section className="state-panel" role="status">
+
+                  <div className="loading-spinner" />
+
+                  <div>
+                    <h3>Investigating your problem</h3>
+
+                    <p>
+                      Gathering evidence and analyzing possible
+                      explanations. This may take a little while.
+                    </p>
+                  </div>
+
+                </section>
+              )}
+
+              {/* ERROR STATE */}
+              {error && (
+                <section className="error-panel" role="alert">
+
+                  <div>
+                    <h3>Investigation needs attention</h3>
+                    <p>{error}</p>
+                  </div>
 
                   <button
                     className="secondary-button"
                     type="button"
                     onClick={handleNewInvestigation}
                   >
-                    New investigation
+                    Dismiss
                   </button>
-                </div>
-              </div>
 
-              {/* FINAL SYNTHESIZED REPORT */}
-              <ReportSection
-                title="Final investigation report"
-                data={report.final_report}
-              />
+                </section>
+              )}
 
-              {/* AI AGENT FINDINGS */}
-              <AgentFindings
-                evidence={report.evidence_findings}
-                rootCause={report.root_cause_findings}
-                solutions={report.solution_findings}
-              />
+              {/* INVESTIGATION RESULTS */}
+              {report && (
+                <section
+                  className="report-container"
+                  aria-live="polite"
+                >
 
-              {/* RETRIEVED KNOWLEDGE SOURCES */}
-              <SourcesPanel
-                sources={report.sources}
-              />
+                  {/* REPORT HEADER */}
+                  <div className="report-heading">
 
-              {/* ORIGINAL JSON FOR DEBUGGING */}
-              <details className="raw-response">
-                <summary>View complete API response</summary>
+                    <div>
+                      <p className="eyebrow">
+                        INVESTIGATION RESULTS
+                      </p>
 
-                <pre>
-                  {JSON.stringify(report, null, 2)}
-                </pre>
-              </details>
+                      <h2>Your investigation report</h2>
+                    </div>
 
-              <p className="report-disclaimer">
-                AI-generated findings may be incomplete or incorrect.
-                Verify important claims against the original evidence.
-              </p>
-            </section>
+                    <div className="report-actions">
+
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={handleCopyReport}
+                      >
+                        {copied ? "Copied ✓" : "Copy report"}
+                      </button>
+
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={openNewInvestigation}
+                      >
+                        New investigation
+                      </button>
+
+                    </div>
+                  </div>
+
+                  {/* FINAL SYNTHESIZED REPORT */}
+                  <ReportSection
+                    title="Final investigation report"
+                    data={report.final_report}
+                  />
+
+                  {/* AI AGENT FINDINGS */}
+                  <AgentFindings
+                    evidence={report.evidence_findings}
+                    rootCause={report.root_cause_findings}
+                    solutions={report.solution_findings}
+                  />
+
+                  {/* RETRIEVED KNOWLEDGE SOURCES */}
+                  <SourcesPanel
+                    sources={report.sources}
+                  />
+
+                  {/* ORIGINAL JSON FOR DEBUGGING */}
+                  <details className="raw-response">
+
+                    <summary>
+                      View complete API response
+                    </summary>
+
+                    <pre>
+                      {JSON.stringify(report, null, 2)}
+                    </pre>
+
+                  </details>
+
+                  <p className="report-disclaimer">
+                    AI-generated findings may be incomplete or incorrect.
+                    Verify important claims against the original evidence.
+                  </p>
+
+                </section>
+              )}
+
+              {/* FOOTER */}
+              <footer className="app-footer">
+                <span>Built for clearer thinking.</span>
+                <span>Praxia © 2026</span>
+              </footer>
+
+            </>
+
           )}
-
-          {/* FOOTER */}
-          <footer className="app-footer">
-            <span>Built for clearer thinking.</span>
-            <span>Praxia © 2026</span>
-          </footer>
 
         </div>
       </main>
 
-      {/* RIGHT CONTEXT PANEL */}
+      {/* =====================================
+          RIGHT CONTEXT PANEL
+      ====================================== */}
+
       <aside className="context-panel">
+
         <div className="context-heading">
           <span>YOUR WORKSPACE</span>
 
@@ -277,8 +379,11 @@ export default function App() {
           </span>
         </div>
 
+        {/* WELCOME CARD */}
         <section className="context-card welcome-card">
+
           <div className="context-card-art" aria-hidden="true">
+
             <div className="context-art-sheet">
               <span />
               <span />
@@ -286,6 +391,7 @@ export default function App() {
             </div>
 
             <div className="context-symbol">✳</div>
+
           </div>
 
           <h3>Think it through.</h3>
@@ -294,40 +400,52 @@ export default function App() {
             Turn uncertainty into a structured investigation,
             one step at a time.
           </p>
+
         </section>
 
+        {/* HOW PRAXIA WORKS */}
         <section className="context-section">
+
           <h4>HOW PRAXIA WORKS</h4>
 
           <div className="workflow-step">
+
             <span className="step-number">01</span>
 
             <div>
               <strong>Gather evidence</strong>
               <p>Retrieve relevant information and sources.</p>
             </div>
+
           </div>
 
           <div className="workflow-step">
+
             <span className="step-number">02</span>
 
             <div>
               <strong>Explore causes</strong>
               <p>Investigate possible explanations.</p>
             </div>
+
           </div>
 
           <div className="workflow-step">
+
             <span className="step-number">03</span>
 
             <div>
               <strong>Find next steps</strong>
               <p>Review suggested solutions and limitations.</p>
             </div>
+
           </div>
+
         </section>
 
+        {/* USEFUL TIP */}
         <section className="context-tip">
+
           <div className="tip-heading">
             <span className="tip-icon">✦</span>
             <span className="tip-label">A USEFUL TIP</span>
@@ -337,12 +455,15 @@ export default function App() {
             Include what happened, what you expected, and any
             evidence or error messages you have.
           </p>
+
         </section>
 
+        {/* CONTEXT BOTTOM */}
         <div className="context-bottom">
           <span className="mini-status" />
           <span>Findings should be verified</span>
         </div>
+
       </aside>
 
     </div>
