@@ -8,26 +8,34 @@ import {
   deleteInvestigationReport,
 } from "../../api/investigation";
 
-// 1. Run and save an investigation for a case
+// ==========================================
+// 1. RUN AI INVESTIGATION
+// ==========================================
+
 export const runInvestigationThunk = createAsyncThunk(
   "investigation/runInvestigation",
   async ({ caseId, query, topK = 3 }, { rejectWithValue }) => {
     try {
-      return await runInvestigation(caseId, query, topK);
+      const result = await runInvestigation(caseId, query, topK);
+      return result;
     } catch (error) {
       return rejectWithValue(
-        error.message || "Something went wrong during the investigation."
+        error.message || "AI Investigation failed."
       );
     }
   }
 );
 
-// 2. Fetch all investigation reports belonging to a case
+// ==========================================
+// 2. FETCH CASE INVESTIGATION HISTORY
+// ==========================================
+
 export const fetchCaseInvestigations = createAsyncThunk(
   "investigation/fetchCaseInvestigations",
   async (caseId, { rejectWithValue }) => {
     try {
-      return await getCaseInvestigations(caseId);
+      const result = await getCaseInvestigations(caseId);
+      return result;
     } catch (error) {
       return rejectWithValue(
         error.message || "Unable to fetch investigation history."
@@ -36,12 +44,16 @@ export const fetchCaseInvestigations = createAsyncThunk(
   }
 );
 
-// 3. Fetch one saved investigation report
+// ==========================================
+// 3. FETCH SINGLE INVESTIGATION REPORT
+// ==========================================
+
 export const fetchInvestigationReport = createAsyncThunk(
   "investigation/fetchInvestigationReport",
   async (reportId, { rejectWithValue }) => {
     try {
-      return await getInvestigationReport(reportId);
+      const result = await getInvestigationReport(reportId);
+      return result;
     } catch (error) {
       return rejectWithValue(
         error.message || "Unable to fetch investigation report."
@@ -50,7 +62,10 @@ export const fetchInvestigationReport = createAsyncThunk(
   }
 );
 
-// 4. Delete a saved investigation report
+// ==========================================
+// 4. DELETE INVESTIGATION REPORT
+// ==========================================
+
 export const removeInvestigationReport = createAsyncThunk(
   "investigation/removeInvestigationReport",
   async (reportId, { rejectWithValue }) => {
@@ -64,6 +79,10 @@ export const removeInvestigationReport = createAsyncThunk(
     }
   }
 );
+
+// ==========================================
+// 5. INITIAL REDUX STATE
+// ==========================================
 
 const initialState = {
   report: null,
@@ -82,6 +101,10 @@ const initialState = {
   deleteStatus: "idle",
   deleteError: null,
 };
+
+// ==========================================
+// 6. INVESTIGATION SLICE
+// ==========================================
 
 const investigationSlice = createSlice({
   name: "investigation",
@@ -111,6 +134,7 @@ const investigationSlice = createSlice({
     builder
 
       // RUN INVESTIGATION
+
       .addCase(runInvestigationThunk.pending, (state) => {
         state.status = "loading";
         state.error = null;
@@ -122,7 +146,6 @@ const investigationSlice = createSlice({
         state.report = action.payload;
         state.error = null;
 
-        // Add the newly saved report to the history immediately.
         state.reports = [
           action.payload,
           ...state.reports.filter(
@@ -133,10 +156,12 @@ const investigationSlice = createSlice({
 
       .addCase(runInvestigationThunk.rejected, (state, action) => {
         state.status = "failed";
-        state.error = action.payload || "Investigation failed.";
+        state.error =
+          action.payload || action.error.message || "Investigation failed.";
       })
 
-      // FETCH CASE INVESTIGATION HISTORY
+      // FETCH INVESTIGATION HISTORY
+
       .addCase(fetchCaseInvestigations.pending, (state) => {
         state.historyStatus = "loading";
         state.historyError = null;
@@ -144,21 +169,26 @@ const investigationSlice = createSlice({
 
       .addCase(fetchCaseInvestigations.fulfilled, (state, action) => {
         state.historyStatus = "succeeded";
-        state.reports = action.payload;
         state.historyError = null;
+
+        const reports = Array.isArray(action.payload)
+          ? action.payload
+          : action.payload?.reports;
+
+        state.reports = Array.isArray(reports) ? reports : [];
       })
 
       .addCase(fetchCaseInvestigations.rejected, (state, action) => {
         state.historyStatus = "failed";
         state.historyError =
-          action.payload || "Unable to fetch investigation history.";
+          action.payload || action.error.message || "History fetch failed.";
       })
 
       // FETCH SINGLE REPORT
+
       .addCase(fetchInvestigationReport.pending, (state) => {
         state.reportStatus = "loading";
         state.reportError = null;
-        state.selectedReport = null;
       })
 
       .addCase(fetchInvestigationReport.fulfilled, (state, action) => {
@@ -170,29 +200,30 @@ const investigationSlice = createSlice({
       .addCase(fetchInvestigationReport.rejected, (state, action) => {
         state.reportStatus = "failed";
         state.reportError =
-          action.payload || "Unable to fetch investigation report.";
+          action.payload || action.error.message || "Report fetch failed.";
       })
 
       // DELETE REPORT
+
       .addCase(removeInvestigationReport.pending, (state) => {
         state.deleteStatus = "loading";
         state.deleteError = null;
       })
 
       .addCase(removeInvestigationReport.fulfilled, (state, action) => {
+        const deletedReportId = action.payload;
+
         state.deleteStatus = "succeeded";
 
-        const reportId = action.payload;
-
         state.reports = state.reports.filter(
-          (item) => item.id !== reportId
+          (item) => item.id !== deletedReportId
         );
 
-        if (state.report?.id === reportId) {
+        if (state.report?.id === deletedReportId) {
           state.report = null;
         }
 
-        if (state.selectedReport?.id === reportId) {
+        if (state.selectedReport?.id === deletedReportId) {
           state.selectedReport = null;
         }
       })
@@ -200,10 +231,14 @@ const investigationSlice = createSlice({
       .addCase(removeInvestigationReport.rejected, (state, action) => {
         state.deleteStatus = "failed";
         state.deleteError =
-          action.payload || "Unable to delete investigation report.";
+          action.payload || action.error.message || "Report deletion failed.";
       });
   },
 });
+
+// ==========================================
+// 7. EXPORT ACTIONS AND REDUCER
+// ==========================================
 
 export const {
   clearInvestigation,

@@ -2,69 +2,137 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-// Investigation components
+// Investigation
 import {
   runInvestigationThunk,
   clearInvestigation,
 } from "./features/investigation/investigationSlice";
 
+// Cases
+import { addCase } from "./features/cases/casesSlice";
+import CasesDashboard from "./features/cases/CasesDashboard";
+
+// Components
 import ProblemForm from "./components/ProblemForm";
 import ReportSection from "./components/ReportSection";
 import AgentFindings from "./components/AgentFindings";
 import SourcesPanel from "./components/SourcesPanel";
+import EvidenceWorkspace from "./components/EvidenceWorkspace";
 
-// Cases components
-import CasesDashboard from "./features/cases/CasesDashboard";
 import "./features/cases/Cases.css";
 
 export default function App() {
   const dispatch = useDispatch();
 
-  // Current active page
+  // Navigation
   const [activeView, setActiveView] = useState("investigation");
 
-  // Investigation data from Redux
+  // Current case
+  const [activeCase, setActiveCase] = useState(null);
+
+  // UI states
+  const [copied, setCopied] = useState(false);
+  const [creatingCase, setCreatingCase] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  // Investigation state
   const { report, status, error } = useSelector(
     (state) => state.investigation
   );
 
-  // Local state for copy button feedback
-  const [copied, setCopied] = useState(false);
+  const loading = status === "loading" || creatingCase;
 
-  const loading = status === "loading";
+  // Create a case before investigation.
+  async function handlePrepareCase(query) {
+    setCreatingCase(true);
+    setSubmitError("");
 
-  // Start a new investigation
-  function handleInvestigation(query, topK) {
-    setCopied(false);
+    try {
+      const title =
+        query.length > 80
+          ? `${query.slice(0, 77)}...`
+          : query;
 
-    dispatch(
-      runInvestigationThunk({
-        query,
-        topK,
-      })
-    );
+      const createdCase = await dispatch(
+        addCase({
+          title,
+          description: query,
+          problem_type: "general",
+        })
+      ).unwrap();
+
+      setActiveCase(createdCase);
+
+      return createdCase;
+    } catch (err) {
+      const message =
+        typeof err === "string"
+          ? err
+          : err?.message || "Unable to create your case.";
+
+      setSubmitError(message);
+      throw err;
+    } finally {
+      setCreatingCase(false);
+    }
   }
 
-  // Copy complete investigation report
+  // Run investigation using the active case.
+  async function handleInvestigation(query, topK) {
+    setCopied(false);
+    setSubmitError("");
+
+    try {
+      let caseToInvestigate = activeCase;
+
+      if (!caseToInvestigate) {
+        caseToInvestigate = await handlePrepareCase(query);
+      }
+
+      await dispatch(
+        runInvestigationThunk({
+          caseId: caseToInvestigate.id,
+          query,
+          topK,
+        })
+      ).unwrap();
+    } catch (err) {
+      const message =
+        typeof err === "string"
+          ? err
+          : err?.message || "Unable to start the investigation.";
+
+      setSubmitError(message);
+    }
+  }
+
+  // Copy complete report.
   async function handleCopyReport() {
+    if (!report) return;
+
     try {
       await navigator.clipboard.writeText(
         JSON.stringify(report, null, 2)
       );
 
       setCopied(true);
+
+      setTimeout(() => setCopied(false), 2000);
     } catch {
-      alert("Unable to copy the report. Please try again.");
+      setSubmitError("Unable to copy the report. Please try again.");
     }
   }
 
-  // Clear current investigation
+  // Reset current investigation and case selection.
   function handleNewInvestigation() {
     dispatch(clearInvestigation());
+
+    setActiveCase(null);
     setCopied(false);
+    setSubmitError("");
   }
 
-  // Navigate to a new investigation
+  // Navigate to investigation page.
   function openNewInvestigation() {
     handleNewInvestigation();
     setActiveView("investigation");
@@ -73,19 +141,23 @@ export default function App() {
   return (
     <div className="workspace">
 
-      {/* =====================================
-          LEFT SIDEBAR
-      ====================================== */}
-
+      {/* LEFT SIDEBAR */}
       <aside className="sidebar">
 
         {/* BRAND */}
-        <a className="brand" href="/" aria-label="Praxia home">
+        <a
+          className="brand"
+          href="/"
+          aria-label="Praxia home"
+          onClick={(event) => {
+            event.preventDefault();
+            openNewInvestigation();
+          }}
+        >
           <span className="brand-mark">P</span>
 
           <span className="brand-copy">
             <span className="brand-name">praxia</span>
-
             <span className="brand-caption">
               AI Investigation Workspace
             </span>
@@ -107,7 +179,7 @@ export default function App() {
             activeView === "investigation" ? "page" : undefined
           }
         >
-          <span className="nav-icon">✳</span>
+          <span className="nav-icon">◈</span>
           <span>Investigation</span>
         </button>
 
@@ -138,7 +210,6 @@ export default function App() {
 
         {/* SIDEBAR BOTTOM */}
         <div className="sidebar-bottom">
-
           <div className="sidebar-note">
             <span className="mini-status" />
 
@@ -153,25 +224,17 @@ export default function App() {
           <span className="sidebar-version">
             PRAXIA · EARLY ACCESS
           </span>
-
         </div>
       </aside>
 
-      {/* =====================================
-          MAIN WORKSPACE
-      ====================================== */}
-
+      {/* MAIN WORKSPACE */}
       <main className="main-area">
 
         {/* TOPBAR */}
         <header className="topbar">
-
           <div className="breadcrumb">
             <span>Workspace</span>
-
-            <span className="breadcrumb-separator">
-              /
-            </span>
+            <span className="breadcrumb-separator">/</span>
 
             <strong>
               {activeView === "cases"
@@ -184,31 +247,19 @@ export default function App() {
             <span className="mini-status" />
             Multi-agent AI
           </div>
-
         </header>
 
         {/* MAIN SCROLL AREA */}
         <div className="main-scroll">
 
-          {/* =================================
-              CASES DASHBOARD
-          ================================== */}
-
+          {/* CASES DASHBOARD */}
           {activeView === "cases" ? (
-
             <CasesDashboard />
-
           ) : (
-
-            /* =================================
-                INVESTIGATION WORKSPACE
-            ================================== */
-
             <>
 
-              {/* HERO SECTION */}
+              {/* HERO */}
               <section className="hero">
-
                 <div className="hero-icon">
                   <span>✳</span>
                 </div>
@@ -227,7 +278,6 @@ export default function App() {
                   Bring a problem. Explore the evidence, understand
                   possible causes, and find your next step.
                 </p>
-
               </section>
 
               {/* INVESTIGATION FORM */}
@@ -236,236 +286,200 @@ export default function App() {
                 loading={loading}
               />
 
-              {/* LOADING STATE */}
-              {loading && (
-                <section className="state-panel" role="status">
-
-                  <div className="loading-spinner" />
-
+              {/* ACTIVE CASE */}
+              {activeCase && (
+                <section className="active-case-banner">
                   <div>
-                    <h3>Investigating your problem</h3>
-
-                    <p>
-                      Gathering evidence and analyzing possible
-                      explanations. This may take a little while.
-                    </p>
-                  </div>
-
-                </section>
-              )}
-
-              {/* ERROR STATE */}
-              {error && (
-                <section className="error-panel" role="alert">
-
-                  <div>
-                    <h3>Investigation needs attention</h3>
-                    <p>{error}</p>
+                    <p className="eyebrow">ACTIVE CASE</p>
+                    <strong>{activeCase.title}</strong>
+                    <small>
+                      Case ID: {activeCase.id}
+                    </small>
                   </div>
 
                   <button
-                    className="secondary-button"
                     type="button"
                     onClick={handleNewInvestigation}
+                    disabled={loading}
                   >
-                    Dismiss
+                    Start new
                   </button>
-
                 </section>
               )}
 
-              {/* INVESTIGATION RESULTS */}
+              {/* EVIDENCE MANAGEMENT */}
+              {activeCase && (
+                <EvidenceWorkspace
+                  caseId={activeCase.id}
+                />
+              )}
+
+              {/* LOADING */}
+              {loading && (
+                <section className="state-panel" role="status">
+                  <div className="loading-spinner" />
+
+                  <div>
+                    <h3>
+                      {creatingCase
+                        ? "Preparing your case"
+                        : "Investigating your problem"}
+                    </h3>
+
+                    <p>
+                      {creatingCase
+                        ? "Creating your case before starting the investigation."
+                        : "Gathering evidence and analyzing possible explanations. This may take a little while."}
+                    </p>
+                  </div>
+                </section>
+              )}
+
+              {/* ERROR */}
+              {(error || submitError) && (
+                <section className="error-panel" role="alert">
+                  <div>
+                    <strong>Something went wrong</strong>
+                    <p>{submitError || error}</p>
+                  </div>
+                </section>
+              )}
+
+              {/* INVESTIGATION REPORT */}
               {report && (
-                <section
-                  className="report-container"
-                  aria-live="polite"
-                >
+                <section className="investigation-results">
 
-                  {/* REPORT HEADER */}
                   <div className="report-heading">
-
                     <div>
                       <p className="eyebrow">
-                        INVESTIGATION RESULTS
+                        INVESTIGATION COMPLETE
                       </p>
 
-                      <h2>Your investigation report</h2>
+                      <h2>Investigation report</h2>
+
+                      <p>
+                        Review the findings and recommendations
+                        generated from your available evidence.
+                      </p>
                     </div>
 
-                    <div className="report-actions">
-
-                      <button
-                        className="secondary-button"
-                        type="button"
-                        onClick={handleCopyReport}
-                      >
-                        {copied ? "Copied ✓" : "Copy report"}
-                      </button>
-
-                      <button
-                        className="secondary-button"
-                        type="button"
-                        onClick={openNewInvestigation}
-                      >
-                        New investigation
-                      </button>
-
-                    </div>
+                    <button
+                      className="copy-report-button"
+                      type="button"
+                      onClick={handleCopyReport}
+                    >
+                      {copied ? "Copied!" : "Copy report"}
+                    </button>
                   </div>
 
-                  {/* FINAL SYNTHESIZED REPORT */}
-                  <ReportSection
-                    title="Final investigation report"
-                    data={report.final_report}
-                  />
+                  <ReportSection report={report} />
 
-                  {/* AI AGENT FINDINGS */}
-                  <AgentFindings
-                    evidence={report.evidence_findings}
-                    rootCause={report.root_cause_findings}
-                    solutions={report.solution_findings}
-                  />
+                  <AgentFindings report={report} />
 
-                  {/* RETRIEVED KNOWLEDGE SOURCES */}
-                  <SourcesPanel
-                    sources={report.sources}
-                  />
-
-                  {/* ORIGINAL JSON FOR DEBUGGING */}
-                  <details className="raw-response">
-
-                    <summary>
-                      View complete API response
-                    </summary>
-
-                    <pre>
-                      {JSON.stringify(report, null, 2)}
-                    </pre>
-
-                  </details>
-
-                  <p className="report-disclaimer">
-                    AI-generated findings may be incomplete or incorrect.
-                    Verify important claims against the original evidence.
-                  </p>
+                  <SourcesPanel sources={report.sources || []} />
 
                 </section>
               )}
 
-              {/* FOOTER */}
-              <footer className="app-footer">
-                <span>Built for clearer thinking.</span>
-                <span>Praxia © 2026</span>
-              </footer>
+              {/* EMPTY STATE */}
+              {!report && !loading && !error && !submitError && (
+                <section className="empty-workspace">
+                  <div className="empty-workspace-icon">✳</div>
+
+                  <h3>Ready to investigate</h3>
+
+                  <p>
+                    Describe your problem above to create a case.
+                    You can then upload supporting documents,
+                    add knowledge sources, and start your
+                    investigation.
+                  </p>
+                </section>
+              )}
 
             </>
-
           )}
-
         </div>
       </main>
 
-      {/* =====================================
-          RIGHT CONTEXT PANEL
-      ====================================== */}
-
+      {/* RIGHT CONTEXT PANEL */}
       <aside className="context-panel">
 
-        <div className="context-heading">
-          <span>YOUR WORKSPACE</span>
-
-          <span className="context-menu" aria-hidden="true">
-            ···
+        <div className="context-top">
+          <span className="context-label">
+            WORKSPACE GUIDE
           </span>
+
+          <h3>
+            Better answers
+            <br />
+            start with context.
+          </h3>
+
+          <p>
+            Praxia organizes evidence, investigates possible
+            causes, and helps you understand what to do next.
+          </p>
         </div>
 
-        {/* WELCOME CARD */}
-        <section className="context-card welcome-card">
+        <div className="context-divider" />
 
-          <div className="context-card-art" aria-hidden="true">
-
-            <div className="context-art-sheet">
-              <span />
-              <span />
-              <span />
-            </div>
-
-            <div className="context-symbol">✳</div>
-
-          </div>
-
-          <h3>Think it through.</h3>
-
-          <p>
-            Turn uncertainty into a structured investigation,
-            one step at a time.
+        <div className="workflow-card">
+          <p className="context-label">
+            INVESTIGATION WORKFLOW
           </p>
 
-        </section>
-
-        {/* HOW PRAXIA WORKS */}
-        <section className="context-section">
-
-          <h4>HOW PRAXIA WORKS</h4>
-
           <div className="workflow-step">
-
-            <span className="step-number">01</span>
-
+            <span className="workflow-number">01</span>
             <div>
-              <strong>Gather evidence</strong>
-              <p>Retrieve relevant information and sources.</p>
+              <strong>Describe</strong>
+              <small>Explain the problem clearly.</small>
             </div>
-
           </div>
 
           <div className="workflow-step">
-
-            <span className="step-number">02</span>
-
+            <span className="workflow-number">02</span>
             <div>
-              <strong>Explore causes</strong>
-              <p>Investigate possible explanations.</p>
+              <strong>Add evidence</strong>
+              <small>Upload documents and sources.</small>
             </div>
-
           </div>
 
           <div className="workflow-step">
-
-            <span className="step-number">03</span>
-
+            <span className="workflow-number">03</span>
             <div>
-              <strong>Find next steps</strong>
-              <p>Review suggested solutions and limitations.</p>
+              <strong>Investigate</strong>
+              <small>Analyze evidence and possible causes.</small>
             </div>
-
           </div>
 
-        </section>
-
-        {/* USEFUL TIP */}
-        <section className="context-tip">
-
-          <div className="tip-heading">
-            <span className="tip-icon">✦</span>
-            <span className="tip-label">A USEFUL TIP</span>
+          <div className="workflow-step">
+            <span className="workflow-number">04</span>
+            <div>
+              <strong>Review</strong>
+              <small>Read the final report and next steps.</small>
+            </div>
           </div>
+        </div>
 
-          <p>
-            Include what happened, what you expected, and any
-            evidence or error messages you have.
-          </p>
+        <div className="context-tip">
+          <span className="context-tip-icon">✦</span>
 
-        </section>
+          <div>
+            <strong>Useful tip</strong>
+            <p>
+              Include dates, amounts, events, and other
+              specific details when describing a problem.
+            </p>
+          </div>
+        </div>
 
-        {/* CONTEXT BOTTOM */}
-        <div className="context-bottom">
+        <div className="context-footer">
           <span className="mini-status" />
-          <span>Findings should be verified</span>
+          Praxia AI workspace
         </div>
 
       </aside>
-
     </div>
   );
 }

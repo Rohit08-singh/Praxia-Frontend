@@ -1,7 +1,8 @@
-
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import DocumentsPanel from "../documents/DocumentsPanel";
 
+import LoadingState from "../../components/LoadingState";
 import { removeCase } from "./casesSlice";
 
 import {
@@ -10,13 +11,15 @@ import {
   fetchInvestigationReport,
   removeInvestigationReport,
   clearSelectedReport,
+  clearInvestigation,
+  clearInvestigationHistory,
 } from "../investigation/investigationSlice";
 
-export default function CaseDetails({
-  caseItem,
-  onClose,
-  onEdit,
-}) {
+import "./InvestigationReport.css";
+
+
+
+export default function CaseDetails({ caseItem, onClose, onEdit }) {
   const dispatch = useDispatch();
 
   const deleting = useSelector(
@@ -32,14 +35,20 @@ export default function CaseDetails({
     historyStatus,
     historyError,
     reportStatus,
+    reportError,
     deleteStatus,
     deleteError,
   } = useSelector((state) => state.investigation);
 
-  // Load saved investigation history whenever a case is opened.
+  // Show either the latest report or an older report selected from history.
+  const displayedReport = selectedReport || report;
+
+  // Load the selected case's investigation history.
   useEffect(() => {
     if (caseItem?.id) {
+      dispatch(clearInvestigation());
       dispatch(clearSelectedReport());
+      dispatch(clearInvestigationHistory());
       dispatch(fetchCaseInvestigations(caseItem.id));
     }
   }, [dispatch, caseItem?.id]);
@@ -70,13 +79,22 @@ export default function CaseDetails({
 
   // Start a new AI investigation for this case.
   async function handleStartInvestigation() {
+    dispatch(clearSelectedReport());
+
     try {
-      await dispatch(
+      const result = await dispatch(
         runInvestigationThunk({
           caseId: caseItem.id,
           query: caseItem.description,
           topK: 3,
         })
+      ).unwrap();
+
+      console.log("Investigation completed:", result);
+
+      // Refresh saved reports after successful completion.
+      await dispatch(
+        fetchCaseInvestigations(caseItem.id)
       ).unwrap();
     } catch (error) {
       console.error("Investigation failed:", error);
@@ -140,7 +158,7 @@ export default function CaseDetails({
   return (
     <section className="cases-details-card">
 
-      {/* HEADER */}
+      {/* CASE HEADER */}
       <div className="cases-details-header">
         <div>
           <p className="cases-eyebrow">CASE INFORMATION</p>
@@ -166,6 +184,7 @@ export default function CaseDetails({
         </div>
 
         <div className="cases-details-meta">
+
           <div>
             <span className="cases-detail-label">STATUS</span>
 
@@ -185,6 +204,7 @@ export default function CaseDetails({
             <span className="cases-detail-label">CASE ID</span>
             <code>{caseItem.id}</code>
           </div>
+
         </div>
 
         <div className="cases-details-description">
@@ -196,6 +216,7 @@ export default function CaseDetails({
         </div>
 
         <div className="cases-details-dates">
+
           <div>
             <span className="cases-detail-label">CREATED</span>
             <p>{formatDate(caseItem.created_at)}</p>
@@ -205,7 +226,15 @@ export default function CaseDetails({
             <span className="cases-detail-label">LAST UPDATED</span>
             <p>{formatDate(caseItem.updated_at)}</p>
           </div>
+
         </div>
+      </div>
+
+
+
+      {/* DOCUMENT MANAGEMENT SECTION */}
+      <div className="cases-documents-section">
+        <DocumentsPanel caseItem={caseItem} />
       </div>
 
       {/* AI INVESTIGATION SECTION */}
@@ -215,6 +244,7 @@ export default function CaseDetails({
           <div>
             <p className="cases-eyebrow">PRAXIA AI</p>
             <h3>AI Investigation</h3>
+
             <p>
               Analyze this case using Praxia's multi-agent
               investigation workflow.
@@ -233,25 +263,27 @@ export default function CaseDetails({
             : "✳ Start AI Investigation"}
         </button>
 
-        {status === "loading" && (
-          <p className="cases-info-message">
-            Praxia's AI agents are analyzing the case.
-            Please wait...
-          </p>
-        )}
+        {/* LOADING STATE */}
+        {status === "loading" && <LoadingState />}
 
+        {/* INVESTIGATION ERROR */}
         {status === "failed" && error && (
           <div className="cases-error" role="alert">
-            {error}
+            <strong>Investigation failed</strong>
+            <p>{error}</p>
           </div>
         )}
 
+        {/* INVESTIGATION SUCCESS */}
         {status === "succeeded" && report && (
           <div className="cases-success-message">
             <strong>Investigation completed!</strong>
-            <p>Your investigation report has been saved.</p>
+            <p>
+              Your investigation report has been generated and saved.
+            </p>
           </div>
         )}
+
       </div>
 
       {/* INVESTIGATION HISTORY */}
@@ -260,9 +292,7 @@ export default function CaseDetails({
         <div className="cases-history-heading">
           <div>
             <h3>Investigation history</h3>
-            <p>
-              Saved reports associated with this case.
-            </p>
+            <p>Saved reports associated with this case.</p>
           </div>
 
           <button
@@ -300,12 +330,14 @@ export default function CaseDetails({
 
         {historyStatus === "succeeded" && reports.length > 0 && (
           <div className="cases-history-list">
+
             {reports.map((item) => (
               <article
                 className="cases-history-item"
                 key={item.id}
               >
                 <div className="cases-history-item-info">
+
                   <strong>
                     {item.query || "AI Investigation"}
                   </strong>
@@ -317,9 +349,11 @@ export default function CaseDetails({
                   <span className="cases-status cases-status-resolved">
                     {formatStatus(item.status || "completed")}
                   </span>
+
                 </div>
 
                 <div className="cases-history-item-actions">
+
                   <button
                     type="button"
                     className="cases-view-button"
@@ -336,9 +370,11 @@ export default function CaseDetails({
                   >
                     Delete
                   </button>
+
                 </div>
               </article>
             ))}
+
           </div>
         )}
 
@@ -348,7 +384,7 @@ export default function CaseDetails({
           </div>
         )}
 
-        {/* SELECTED REPORT */}
+        {/* SAVED REPORT LOADING */}
         {reportStatus === "loading" && (
           <p className="cases-info-message">
             Loading saved report...
@@ -357,94 +393,195 @@ export default function CaseDetails({
 
         {reportStatus === "failed" && (
           <div className="cases-error" role="alert">
-            Unable to load the selected report.
+            {reportError || "Unable to load the selected report."}
           </div>
         )}
 
-        {selectedReport && (
+        {/* AUTOMATICALLY DISPLAY LATEST OR SELECTED REPORT */}
+        {displayedReport && (
           <div className="cases-saved-report">
+
             <div className="cases-saved-report-heading">
               <div>
-                <p className="cases-eyebrow">SAVED REPORT</p>
+                <p className="cases-eyebrow">
+                  {selectedReport
+                    ? "SAVED REPORT"
+                    : "LATEST INVESTIGATION"}
+                </p>
+
                 <h3>Investigation report</h3>
               </div>
 
-              <button
-                type="button"
-                className="cases-icon-button"
-                onClick={() => dispatch(clearSelectedReport())}
-                aria-label="Close report"
-              >
-                ×
-              </button>
+              {selectedReport && (
+                <button
+                  type="button"
+                  className="cases-icon-button"
+                  onClick={() => dispatch(clearSelectedReport())}
+                  aria-label="Close report"
+                >
+                  ×
+                </button>
+              )}
             </div>
 
-            <p>
-              <strong>Query:</strong> {selectedReport.query}
-            </p>
+            {/* REPORT DETAILS */}
+            <div className="cases-report-content">
+              <h4>Investigation details</h4>
 
-            {selectedReport.final_report && (
-              <div className="cases-report-content">
-                <h4>Final report</h4>
+              <p>
+                <strong>Query:</strong> {displayedReport.query}
+              </p>
 
+              <p>
+                <strong>Status:</strong>{" "}
+                {formatStatus(displayedReport.status)}
+              </p>
+
+              <p>
+                <strong>Report ID:</strong>{" "}
+                {displayedReport.id}
+              </p>
+
+              <p>
+                <strong>Created:</strong>{" "}
+                {formatDate(displayedReport.created_at)}
+              </p>
+            </div>
+
+            {/* FINAL REPORT */}
+            <div className="cases-report-content">
+              <h4>Final report</h4>
+
+              {displayedReport.final_report ? (
                 <pre>
                   {JSON.stringify(
-                    selectedReport.final_report,
+                    displayedReport.final_report,
                     null,
                     2
                   )}
                 </pre>
-              </div>
-            )}
+              ) : (
+                <p>No final report available.</p>
+              )}
+            </div>
 
+            {/* EVIDENCE FINDINGS */}
             <div className="cases-report-content">
               <h4>Evidence findings</h4>
+
               <pre>
                 {JSON.stringify(
-                  selectedReport.evidence_findings,
+                  displayedReport.evidence_findings || {},
                   null,
                   2
                 )}
               </pre>
             </div>
 
+            {/* ROOT CAUSE FINDINGS */}
             <div className="cases-report-content">
               <h4>Root cause findings</h4>
+
               <pre>
                 {JSON.stringify(
-                  selectedReport.root_cause_findings,
+                  displayedReport.root_cause_findings || {},
                   null,
                   2
                 )}
               </pre>
             </div>
 
+            {/* SOLUTION FINDINGS */}
             <div className="cases-report-content">
               <h4>Solution findings</h4>
+
               <pre>
                 {JSON.stringify(
-                  selectedReport.solution_findings,
+                  displayedReport.solution_findings || {},
                   null,
                   2
                 )}
               </pre>
             </div>
 
+            {/* EVIDENCE SOURCES */}
             <div className="cases-report-content">
-              <h4>Sources</h4>
-              <pre>
-                {JSON.stringify(
-                  selectedReport.sources,
-                  null,
-                  2
-                )}
-              </pre>
+
+              <div className="cases-report-sources-heading">
+                <h4>
+                  Evidence sources
+                </h4>
+
+                <span className="source-count">
+                  {displayedReport.sources?.length || 0} sources
+                </span>
+              </div>
+
+              {displayedReport.sources?.length > 0 ? (
+                <div className="sources-list">
+
+                  {displayedReport.sources.map((source, index) => (
+                    <article
+                      className="source-card"
+                      key={`${source.source_name || "source"}-${source.chunk_index ?? index}`}
+                    >
+                      <div className="source-card-heading">
+                        <div>
+                          <span className="source-number">
+                            SOURCE {index + 1}
+                          </span>
+
+                          <h3>
+                            {source.source_name || "Knowledge source"}
+                          </h3>
+                        </div>
+
+                        {source.distance !== undefined && (
+                          <span className="source-distance">
+                            Distance: {source.distance}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="source-text">
+                        {source.text || "No source text available."}
+                      </p>
+
+                      <div className="source-meta">
+                        Chunk: {source.chunk_index ?? "N/A"}
+                      </div>
+                    </article>
+                  ))}
+
+                </div>
+              ) : (
+                <div className="cases-no-evidence">
+                  <span className="cases-no-evidence-icon">ⓘ</span>
+
+                  <div>
+                    <strong>No supporting evidence found</strong>
+
+                    <p>
+                      Praxia could not retrieve relevant documents
+                      from the current knowledge base.
+                    </p>
+
+                    <p>
+                      Index relevant documents and run the
+                      investigation again.
+                    </p>
+                  </div>
+                </div>
+              )}
+
             </div>
+
           </div>
         )}
+
       </div>
 
-      {/* ACTIONS */}
+      {/* CASE ACTIONS */}
       <div className="cases-details-actions">
 
         <button
@@ -473,7 +610,9 @@ export default function CaseDetails({
             Edit case
           </button>
         </div>
+
       </div>
+
     </section>
   );
 }

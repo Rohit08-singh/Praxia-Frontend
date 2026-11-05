@@ -4,7 +4,7 @@ const API_BASE_URL =
 
 const INVESTIGATION_URL = `${API_BASE_URL}/api/v1/investigation`;
 
-// Common function for handling API requests
+// Common API request handler
 async function request(url, options = {}) {
   try {
     const response = await fetch(url, {
@@ -23,7 +23,9 @@ async function request(url, options = {}) {
         data?.detail || `Request failed (${response.status})`;
 
       throw new Error(
-        typeof message === "string" ? message : JSON.stringify(message)
+        typeof message === "string"
+          ? message
+          : JSON.stringify(message)
       );
     }
 
@@ -39,33 +41,41 @@ async function request(url, options = {}) {
   }
 }
 
-// POST: Run and save an investigation for a case
+// Start a new AI investigation
 export function runInvestigation(caseId, query, topK = 3) {
   if (!caseId) {
-    throw new Error("A case ID is required to start an investigation.");
+    return Promise.reject(
+      new Error("A case ID is required to start an investigation.")
+    );
+  }
+
+  if (!query || !query.trim()) {
+    return Promise.reject(
+      new Error("Investigation query cannot be empty.")
+    );
   }
 
   return request(`${INVESTIGATION_URL}/run`, {
     method: "POST",
     body: JSON.stringify({
       case_id: caseId,
-      query,
+      query: query.trim(),
       top_k: topK,
     }),
   });
 }
 
-// GET: Retrieve all investigation reports belonging to a case
+// Fetch all investigations belonging to a case
 export function getCaseInvestigations(caseId) {
   return request(`${INVESTIGATION_URL}/cases/${caseId}`);
 }
 
-// GET: Retrieve one investigation report
+// Fetch one investigation report
 export function getInvestigationReport(reportId) {
   return request(`${INVESTIGATION_URL}/${reportId}`);
 }
 
-// DELETE: Delete one investigation report
+// Delete an investigation report
 export function deleteInvestigationReport(reportId) {
   return request(`${INVESTIGATION_URL}/${reportId}`, {
     method: "DELETE",
